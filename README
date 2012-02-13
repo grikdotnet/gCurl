@@ -1,0 +1,7 @@
+This package can be used to perform HTTP requests using the Curl library.
+
+It can send HTTP GET, POST, HEAD or OPTIONS requests directly or via HTTP proxy servers that may require authentication. It supports cookies and custom headers.
+
+The request response may be retrieved all at once or passed to a custom response handler class. It can process the returned headers and cookies. It can also handle request redirection.
+
+Released under BSD license.
