@@ -17,6 +17,9 @@ if (!class_exists('gCurlResponse',false)){
 if (!class_exists('gURI',false)){
     require(dirname(__FILE__).'/gURI.class.php');
 }
+if (!class_exists('gCurlOptions',false)){
+    require(dirname(__FILE__).'/gCurlOptions.class.php');
+}
 if (!interface_exists('gCurlHandlers',false)){
     require(dirname(__FILE__).'/gCurlHandlers.php');
 }
@@ -32,20 +35,6 @@ if (!interface_exists('gksException',false)){
  * @version 2
  */
 class gCurl {
-    
-    /**
-     * Error number returned by cURL
-     *
-     * @var int
-     */
-    public $curl_errno=0;
-    
-    /**
-     * Error text returned by cURL
-     *
-     * @var string
-     */
-    public $curl_error='';
     
     /**
      * instance of the URI class
@@ -90,7 +79,12 @@ class gCurl {
      * @var gCurlResponse
      */
     public $Response;
-    
+
+    /**
+     * @var gCurlOptions
+     */
+    public $options;
+
     /**
      * Flag that defines if cURL should automatically follow the "Location" header or not
      *
@@ -119,7 +113,7 @@ class gCurl {
      * @var bool
      */
     private $is_prepared = false;
-    
+
     /**
      * Constants - flags
      */
@@ -167,16 +161,17 @@ class gCurl {
         $this->location_href = $this->URI->full;
 
         $this->ch = curl_init();
-        if ($this->catchCurlError() || !$this->ch){
+        if (!$this->ch || gCurlException::catchError($this->ch)){
             throw new gCurlException(15);
         }
 
         //create request and response objects
         $this->Request= new gCurlRequest();
-        $this->Request->URI = $this->URI;
+        $this->Request->setURI($this->URI);
         $this->Request->setRequestMethod($method);
 
-        $this->Response = new gCurlResponse($this->ch,$this->URI);
+        $this->Response = new gCurlResponse($this->ch);
+        $this->Response->setURI($this->URI);
         
         //set the response headers handler
         curl_setopt($this->ch, CURLOPT_HEADERFUNCTION, array($this->Response,'headersHandler'));
@@ -203,9 +198,10 @@ class gCurl {
         
         //create request and response objects
         $this->Request = new gCurlRequest();
-        $this->Request->URI = $this->URI;
+        $this->Request->setURI($this->URI);
         $this->Request->setRequestMethod($method);
         $this->Response->cleanup();
+        $this->Response->setURI($this->URI);
         $this->is_prepared = false;
     }
 
@@ -231,7 +227,7 @@ class gCurl {
             throw new gCurlException(25);
         }
         curl_setopt($this->ch,CURLOPT_TIMEOUT,$seconds);
-        if ($this->catchCurlError()){
+        if (gCurlException::catchError($this->ch)){
             throw new gCurlException(22);
         }
     }
@@ -367,22 +363,7 @@ class gCurl {
             throw new gCurlException(60);
         }
     }
-    
-    /**
-     * Check for an error
-     *
-     * @return bool
-     */
-    function catchCurlError(){
-        if(!is_resource($this->ch) || !($curl_errno=curl_errno($this->ch))){
-            return false;
-        }
-        $this->curl_errno = $curl_errno;
-        $this->curl_error = curl_error($this->ch);
-        throw new gCurlException(80,$curl_errno,$this->curl_error);
-        return true;
-    }
-    
+
     /**
      * Pass the object implementing the handlers
      * 
@@ -402,6 +383,10 @@ class gCurl {
  *
  */
 class gCurlException extends Exception implements gksException {
+
+    static $curl_errno;
+
+    static $curl_error;
 
     /**
      * The list of exception codes
@@ -443,20 +428,6 @@ class gCurlException extends Exception implements gksException {
         1000=>'Interrupt connection from the handler',
     );
 
-    /**
-     * Error number for CURL operation
-     *
-     * @var int
-     */
-    public $curl_errno;
-    
-    /**
-     * Error message returned by CURL
-     *
-     * @var string
-     */
-    public $curl_error='';
-    
     /**
      * Initialize the exception
      *
@@ -504,6 +475,28 @@ class gCurlException extends Exception implements gksException {
             "<br>\nTrace: <br />\n".nl2br($this->getTraceAsString())."<br>\n";
         }
         return $message;
+    }
+
+    /**
+     * Check for an error
+     *
+     * @param resource $ch
+     * @return bool
+     */
+    static function catchError($ch=null){
+        if ($ch === null){
+            //check all
+
+        }else{
+            if (!is_resource($ch) || !($curl_errno=curl_errno($ch))){
+                return false;
+            }
+            self::$curl_errno = $curl_errno;
+            self::$curl_error = curl_error($ch);
+            throw new gCurlException(80,$curl_errno,self::$curl_error);
+            return true;
+        }
+
     }
 
 //class end

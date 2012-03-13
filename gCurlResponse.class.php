@@ -62,13 +62,6 @@ class gCurlResponse{
      * @var resource
      */
     public $ch;
-    
-    /**
-     * Instance of an gURI class with URI details
-     *
-     * @var gURI
-     */
-    public $URI;
 
     /**
      * Ignore the content-type response header, report the predefined one
@@ -76,7 +69,14 @@ class gCurlResponse{
      * @var string
      */
     protected $force_content_type='';
-        
+
+    /**
+     * Instance of an gURI class with URI details
+     *
+     * @var gURI
+     */
+    private $URI;
+
     /**
      * Response headers handler
      *
@@ -119,8 +119,14 @@ class gCurlResponse{
      * @param resource $ch
      * @param gURI $URI
      */
-    function __construct($ch,gURI $URI){
+    function __construct($ch){
         $this->ch = $ch;
+    }
+
+    /**
+     * @param gURI $URI
+     */
+    function setURI(gURI $URI){
         $this->URI = $URI;
     }
 
@@ -332,7 +338,7 @@ class gCurlResponse{
                 $this->gCurlHandlers->cookiesHandler($this->cookies);
             }
             //if the body handler is defined - assign it to CURL
-            if ( !empty($this->gCurlHandlers) ){
+            if ($this->gCurlHandlers->getUseBodyHandler()){
                 $body_handler = array($this,'bodyHandlerIntermediate');
                 curl_setopt($this->ch,CURLOPT_WRITEFUNCTION,$body_handler);
             }
@@ -465,6 +471,7 @@ class gCurlResponse{
         $this->cookies=array();
         $this->headers=array('len'=>0);
         $this->body_handler=$this->cookies_handler=$this->headers_handler=$this->gCurlHandlers=null;
+        $this->URI = null;
     }
     
     /**

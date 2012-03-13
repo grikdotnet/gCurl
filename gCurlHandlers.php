@@ -23,6 +23,12 @@ interface gCurlHandlers{
      * @param string $chunk
      */
     function bodyHandler($chunk);
+
+    /**
+     * Called to check if the body handler should be set
+     * @return bool
+     */
+    function getUseBodyHandler();
 }
 
 /**
@@ -31,19 +37,10 @@ interface gCurlHandlers{
  * 
  * @package gCurl
  * @author Grigori Kochanov
- * @version 2
+ * @version 2.1
  * @abstract 
  */
 abstract class gCurlHandler implements gCurlHandlers{
-    /**
-     * Name of the method to handle the response body.
-     * You can redefine it while processing response headers or cookies.
-     * Use NULL to avoid setting a handler for the body.
-     *
-     * @var string
-     */
-    public $bodyHandlerName = 'bodyHandler';
-    
     /**
      * Instance of the gCurl class utilizing this handler
      *
@@ -58,7 +55,7 @@ abstract class gCurlHandler implements gCurlHandlers{
      * @param array $headers
      */
     function headersHandler(array $headers){}
-    
+
     /**
      * The method is triggered after the response headers are received,
      * it receives an array of cookies set by the server as parameter
@@ -66,6 +63,14 @@ abstract class gCurlHandler implements gCurlHandlers{
      * @param array $cookies
      */
     function cookiesHandler(array $cookies){}
+
+    /**
+     * Don't use a body handler by default
+     * @return bool
+     */
+    function getUseBodyHandler(){
+        return false;
+    }
     
     /**
      * Default body handler

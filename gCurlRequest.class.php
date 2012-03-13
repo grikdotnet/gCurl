@@ -8,12 +8,6 @@
  */
 class gCurlRequest{
     /**
-     * gURI object with parsed URL
-     *
-     * @var gURI
-     */
-    public $URI;
-    /**
      * request type (GET, POST, HEAD, OPTIONS)
      *
      * @var string
@@ -82,6 +76,27 @@ class gCurlRequest{
      * @var int
      */
     public $post_format = gCurl::POST_URLENCODED;
+
+    /**
+     * gURI object with parsed URL
+     *
+     * @var gURI
+     */
+    private $URI;
+
+    /**
+     * @param gURI $URI
+     */
+    function setURI(gURI $URI){
+        $this->URI = $URI;
+    }
+
+    /**
+     * @return gURI
+     */
+    public function getURI(){
+        return $this->URI;
+    }
 
     /**
      * Assign the data prepared for the POST request
