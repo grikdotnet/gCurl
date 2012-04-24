@@ -173,18 +173,10 @@ class gCurl {
         $this->Response = new gCurlResponse($this->ch);
         $this->Response->setURI($this->URI);
         
+        $this->options = new gCurlOptions($this->ch);
+        $this->options->setBasicParams();
         //set the response headers handler
-        curl_setopt($this->ch, CURLOPT_HEADERFUNCTION, array($this->Response,'headersHandler'));
-        
-        curl_setopt ($this->ch, CURLOPT_HEADER, 0);
-        curl_setopt ($this->ch, CURLOPT_FOLLOWLOCATION, $this->followlocation);
-        curl_setopt ($this->ch, CURLOPT_ENCODING, '');
-        curl_setopt ($this->ch, CURLOPT_RETURNTRANSFER, 1);
-
-        if ($this->URI->scheme == 'https://'){
-            curl_setopt ($this->ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt ($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
-        }
+        $this->options->setHeadersHandler(array($this->Response,'headersHandler'));
     }
 
     /**
@@ -276,37 +268,7 @@ class gCurl {
      * clear settings of a previous request
      */
     function prepare(){
-        //cleanup after the previous request
-        if ($this->request_counter>0){
-            curl_setopt ($this->ch, CURLOPT_HTTPHEADER, array());
-            curl_setopt ($this->ch,CURLOPT_HTTPGET,1);
-        }
-        
-        //define the URI for the request
-        curl_setopt ($this->ch, CURLOPT_URL, $this->URI->get_full_uri());
-        //add cookies to headers
-        if ($this->Request->cookie_string){
-            $this->Request->registerCustomHeader('Cookie: '.$this->Request->cookie_string);
-        }
-        //process user-defined request headers
-        if ($this->Request->custom_headers){
-            curl_setopt ($this->ch, CURLOPT_HTTPHEADER, $this->Request->custom_headers);
-        }
-        //prepare the POST data
-        if ($this->Request->method === 'POST'){
-            $data = $this->Request->getPostFields();
-            curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $data);
-        }elseif ($this->Request->method !== 'GET'){
-            curl_setopt ($this->ch,CURLOPT_CUSTOMREQUEST,$this->Request->method);
-        }
-        //use proxy if defined
-        if ($this->Request->proxy && $this->Request->proxy_port){
-            curl_setopt ($this->ch, CURLOPT_PROXY, $this->Request->proxy);
-            curl_setopt ($this->ch, CURLOPT_PROXYPORT, $this->Request->proxy_port);
-            if ($this->Request->proxyuser){
-                curl_setopt ($this->ch, CURLOPT_PROXYUSERPWD, $this->Request->proxyuser.':'.$this->Request->proxypwd);
-            }
-        }
+        $this->options->requestInit($this->Request);
         $this->is_prepared = true;
     }
     /**
@@ -423,6 +385,7 @@ class gCurlException extends Exception implements gksException {
         320=>'Invalid thread ID',
         330=>'Socket select error',
         335=>'cURL Multi timeout',
+        340=>'Handler did not provide a URL, remove thread',
 
         200=>'Interrupt connection from the handler',
         1000=>'Interrupt connection from the handler',
@@ -437,7 +400,7 @@ class gCurlException extends Exception implements gksException {
      */
     function __construct($code, $curl_errno=0, $curl_error=''){
         //get the error description
-        key_exists($code, $this->exception_codes) || $code=1;
+        array_key_exists($code, $this->exception_codes) || $code=1;
         $message= $this->exception_codes[$code]; 
         if ($curl_errno){
             $message.="\nCurl Error #: ".$curl_errno;

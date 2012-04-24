@@ -7,8 +7,20 @@
 class gCurlOptions{
     private $ch;
 
+    /**
+     * Path of the cookie jar file assigned to CURL
+     * @var string
+     */
+    private $cookie_jar_file;
+
     function __construct($ch){
         $this->ch = $ch;
+    }
+
+    function __destruct(){
+        if ($this->cookie_jar_file){
+            @unlink($this->cookie_jar_file);
+        }
     }
 
     function setFollowLocation($value){
@@ -35,6 +47,7 @@ class gCurlOptions{
     }
 
     function requestInit(gCurlRequest $Request){
+
         curl_setopt ($this->ch, CURLOPT_URL, (string)$Request->getURI());
 
         if ($Request->getURI()->scheme == 'https://'){
@@ -42,12 +55,18 @@ class gCurlOptions{
             curl_setopt ($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
         }
 
+        //cleanup after the previous request
+        curl_setopt ($this->ch,CURLOPT_HTTPGET,1);
+        curl_setopt ($this->ch, CURLOPT_HTTPHEADER, array());
+
         //prepare the POST data
         if (strcasecmp($Request->method, 'POST')==0){
             curl_setopt ($this->ch, CURLOPT_POST, 1);
-        }
-        if ($Request->post_data){
-            curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $Request->post_data);
+            if ($Request->post_data){
+                curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $Request->post_data);
+            }
+        }elseif ($Request->method !== 'GET'){
+            curl_setopt ($this->ch,CURLOPT_CUSTOMREQUEST,$this->Request->method);
         }
 
         //add cookies to headers
@@ -70,5 +89,15 @@ class gCurlOptions{
                 );
             }
         }
+    }
+
+    /**
+     * Sets the parameters used to
+     * @param $file
+     */
+    function setCookieJar($file){
+        curl_setopt($this->ch,CURLOPT_COOKIEFILE,$file);
+        curl_setopt($this->ch,CURLOPT_COOKIEJAR,$file);
+
     }
 }

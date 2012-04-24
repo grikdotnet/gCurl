@@ -45,6 +45,12 @@ class gCurlThread implements gCurlHandlers{
     public $options;
 
     /**
+     * The URL of the redirect
+     * @var string
+     */
+    protected $redirect;
+
+    /**
      * List of redefined handlers, do not modify this variable
      *
      * @var array
@@ -80,29 +86,45 @@ class gCurlThread implements gCurlHandlers{
     }
 
     /**
+     * This method returns the URI for the request.
+     * It should be redefined to provide URLs from the custom sources
+     *
      * @return gURI
      */
     public function getUri(){
+        if ($this->redirect){
+            $this->redirect = null;
+            if (!$this->Request->getURI()){
+                return new gURI($this->redirect);
+            }
+            return $this->Request->getURI()->parse_http_redirect($this->redirect);
+        }
         return new gURI($this->url);
     }
 
     /**
-     * This method should initialize $this->Request as gCurlRequest instance
+     * This method initializes $this->Request as gCurlRequest instance
      * and $this->Response as gCurlResponse.
-     * It can be redefined to provide additional parameters such as POST data
      * $this->Request->URI should contain URI (string or object castable to string)
      *
+     * @return bool
      */
     final public function init(){
         $this->Request = new gCurlRequest();
-        $this->Request->setURI($this->getUri());
-        $this->Response->setURI($this->getUri());
+        $uri = $this->getUri();
+        if (!($uri instanceof gURI)){
+            return false;
+        }
+        $this->Request->setURI($uri);
+        $this->Response->setURI($uri);
         $this->customizeRequest($this->Request);
         $this->options->requestInit($this->Request);
+        return true;
     }
 
     /**
      * Redefine this function to customize the request
+     * Additional parameters such as POST data should be set here
      * @param gCurlRequest $Request
      */
     function customizeRequest(gCurlRequest $Request){}
@@ -126,7 +148,7 @@ class gCurlThread implements gCurlHandlers{
      * @return bool
      */
     function eof(){
-        return true;
+        return !$this->redirect;
     }
 
     /**
@@ -154,6 +176,13 @@ class gCurlThread implements gCurlHandlers{
      * regardless of the HTTP response code
      */
     function onSuccess(){}
+
+    /**
+     * Called when the redirect is met
+     */
+    function onRedirect(){
+
+    }
 
     /**
      * Called if there is a connection error

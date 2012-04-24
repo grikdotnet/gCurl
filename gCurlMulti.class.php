@@ -84,7 +84,9 @@ class gCurlMulti{
         }
 
         //set parameters for request
-        $Thread->init();
+        if (!$Thread->init()){
+            return;
+        }
 
         curl_multi_add_handle ($this->mh,$Thread->ch);
         $this->threads[] = $Thread;
@@ -149,7 +151,15 @@ class gCurlMulti{
                 if ($details['result'] == CURLE_OK){
                     //response received successfully
                     $Thread->Response->body = curl_multi_getcontent($Thread->ch);
-                    $Thread->onSuccess();
+                    if (isset($Thread->Response->headers['status-class']) &&
+                        $Thread->Response->headers['status-class'] == 3
+                        || isset($Thread->Response->headers['location']))
+                    {
+                        $Thread->onRedirect();
+                    }else{
+                        $Thread->onSuccess();
+                    }
+
                 }else{
                     //connection error
                     $Thread->onFailure();
@@ -157,8 +167,9 @@ class gCurlMulti{
                 if (!$Thread->eof()){
                     //if the thread should be reused - prepare the new request and reassign the handler
                     $Thread->Response->cleanup();
-                    $Thread->init();
-                    curl_multi_add_handle ($this->mh,$Thread->ch);
+                    if ($Thread->init()){
+                        curl_multi_add_handle ($this->mh,$Thread->ch);
+                    }
                     $thread_renew = true;
                 } elseif ( is_resource($Thread->ch)){
                     //thread finished, close resource
