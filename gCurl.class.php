@@ -173,18 +173,10 @@ class gCurl {
         $this->Response = new gCurlResponse($this->ch);
         $this->Response->setURI($this->URI);
         
+        $this->options = new gCurlOptions($this->ch);
+        $this->options->setBasicParams();
         //set the response headers handler
-        curl_setopt($this->ch, CURLOPT_HEADERFUNCTION, array($this->Response,'headersHandler'));
-        
-        curl_setopt ($this->ch, CURLOPT_HEADER, 0);
-        curl_setopt ($this->ch, CURLOPT_FOLLOWLOCATION, $this->followlocation);
-        curl_setopt ($this->ch, CURLOPT_ENCODING, '');
-        curl_setopt ($this->ch, CURLOPT_RETURNTRANSFER, 1);
-
-        if ($this->URI->scheme == 'https://'){
-            curl_setopt ($this->ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt ($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
-        }
+        $this->options->setHeadersHandler(array($this->Response,'headersHandler'));
     }
 
     /**
@@ -216,97 +208,13 @@ class gCurl {
         }
         $this->return_transfer=(bool)$value;
     }
-    
-    /**
-     * sets the time limit of time the CURL can execute
-     *
-     * @param int $seconds
-     */
-    function setTimeout($seconds){
-        if ($this->is_prepared){
-            throw new gCurlException(25);
-        }
-        curl_setopt($this->ch,CURLOPT_TIMEOUT,$seconds);
-        if (gCurlException::catchError($this->ch)){
-            throw new gCurlException(22);
-        }
-    }
-    
-    /**
-     * Set the network interface for the outgoing connection
-     *
-     * @param string $interface
-     */
-    function setInterface($interface){
-        if ($this->is_prepared){
-            throw new gCurlException(25);
-        }
-        $this->interface = $interface;
-        curl_setopt($this->ch,CURLOPT_INTERFACE,$this->interface);
-    }
 
-    function setPrivateKey($key_path,$password = ''){
-        curl_setopt($this->ch,CURLOPT_SSLKEY,$key_path);
-        if ($password !==''){
-            curl_setopt($this->ch,CURLOPT_SSLKEYPASSWD,$password);
-        }
-    }
-
-    function setCertificate($crt_path,$password=''){
-        curl_setopt($this->ch,CURLOPT_SSLCERT,$crt_path);
-        if ($password !==''){
-            curl_setopt($this->ch,CURLOPT_SSLCERTPASSWD,$password);
-        }
-    }
-    
-    /**
-     * Set extra options for the connection
-     *
-     * @param array $options
-     */
-    function setOptions(array $options){
-        if ($this->is_prepared){
-            throw new gCurlException(25);
-        }
-        curl_setopt_array($this->ch,$options);
-    }
-    
     /**
      * Assign request headers, request parameters and data for POST, set proxy and 
      * clear settings of a previous request
      */
     function prepare(){
-        //cleanup after the previous request
-        if ($this->request_counter>0){
-            curl_setopt ($this->ch, CURLOPT_HTTPHEADER, array());
-            curl_setopt ($this->ch,CURLOPT_HTTPGET,1);
-        }
-        
-        //define the URI for the request
-        curl_setopt ($this->ch, CURLOPT_URL, $this->URI->get_full_uri());
-        //add cookies to headers
-        if ($this->Request->cookie_string){
-            $this->Request->registerCustomHeader('Cookie: '.$this->Request->cookie_string);
-        }
-        //process user-defined request headers
-        if ($this->Request->custom_headers){
-            curl_setopt ($this->ch, CURLOPT_HTTPHEADER, $this->Request->custom_headers);
-        }
-        //prepare the POST data
-        if ($this->Request->method === 'POST'){
-            $data = $this->Request->getPostFields();
-            curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $data);
-        }elseif ($this->Request->method !== 'GET'){
-            curl_setopt ($this->ch,CURLOPT_CUSTOMREQUEST,$this->Request->method);
-        }
-        //use proxy if defined
-        if ($this->Request->proxy && $this->Request->proxy_port){
-            curl_setopt ($this->ch, CURLOPT_PROXY, $this->Request->proxy);
-            curl_setopt ($this->ch, CURLOPT_PROXYPORT, $this->Request->proxy_port);
-            if ($this->Request->proxyuser){
-                curl_setopt ($this->ch, CURLOPT_PROXYUSERPWD, $this->Request->proxyuser.':'.$this->Request->proxypwd);
-            }
-        }
+        $this->options->requestInit($this->Request);
         $this->is_prepared = true;
     }
     /**
@@ -373,6 +281,15 @@ class gCurl {
         $Handlers->setGCurlReference($this);
         $this->Response->setHandlers($Handlers);
     }
+
+    /**
+     * Closing the curl handler is required for repetitive requests
+     * to release memory used by cURL
+     */
+    function __destruct(){
+        unset($this->Request,$this->Response,$this->URI);
+        $this->disconnect();
+    }
 //end of the class
 }
 
@@ -423,6 +340,7 @@ class gCurlException extends Exception implements gksException {
         320=>'Invalid thread ID',
         330=>'Socket select error',
         335=>'cURL Multi timeout',
+        340=>'Handler did not provide a URL, remove thread',
 
         200=>'Interrupt connection from the handler',
         1000=>'Interrupt connection from the handler',
@@ -437,7 +355,7 @@ class gCurlException extends Exception implements gksException {
      */
     function __construct($code, $curl_errno=0, $curl_error=''){
         //get the error description
-        key_exists($code, $this->exception_codes) || $code=1;
+        array_key_exists($code, $this->exception_codes) || $code=1;
         $message= $this->exception_codes[$code]; 
         if ($curl_errno){
             $message.="\nCurl Error #: ".$curl_errno;

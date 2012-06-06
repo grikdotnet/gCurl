@@ -7,8 +7,20 @@
 class gCurlOptions{
     private $ch;
 
+    /**
+     * Path of the cookie jar file assigned to CURL
+     * @var string
+     */
+    private $cookie_jar_file;
+
     function __construct($ch){
         $this->ch = $ch;
+    }
+
+    function __destruct(){
+        if ($this->cookie_jar_file){
+            @unlink($this->cookie_jar_file);
+        }
     }
 
     function setFollowLocation($value){
@@ -35,6 +47,7 @@ class gCurlOptions{
     }
 
     function requestInit(gCurlRequest $Request){
+
         curl_setopt ($this->ch, CURLOPT_URL, (string)$Request->getURI());
 
         if ($Request->getURI()->scheme == 'https://'){
@@ -42,12 +55,18 @@ class gCurlOptions{
             curl_setopt ($this->ch, CURLOPT_SSL_VERIFYHOST, 2);
         }
 
+        //cleanup after the previous request
+        curl_setopt ($this->ch,CURLOPT_HTTPGET,1);
+        curl_setopt ($this->ch, CURLOPT_HTTPHEADER, array());
+
         //prepare the POST data
         if (strcasecmp($Request->method, 'POST')==0){
             curl_setopt ($this->ch, CURLOPT_POST, 1);
-        }
-        if ($Request->post_data){
-            curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $Request->post_data);
+            if ($Request->post_data){
+                curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $Request->post_data);
+            }
+        }elseif ($Request->method !== 'GET'){
+            curl_setopt ($this->ch,CURLOPT_CUSTOMREQUEST,$this->Request->method);
         }
 
         //add cookies to headers
@@ -70,5 +89,80 @@ class gCurlOptions{
                 );
             }
         }
+    }
+
+    /**
+     * Sets the name of a file used to store cookies
+     * @param $file
+     */
+    function setCookieJar($file){
+        curl_setopt($this->ch,CURLOPT_COOKIEFILE,$file);
+        curl_setopt($this->ch,CURLOPT_COOKIEJAR,$file);
+
+    }
+
+    /**
+     * Sets the time limit for the connection.
+     * It makes sense to set a small value before making a request as a connection timeout,
+     * and increase the value after the response started to be received
+     * @param $seconds
+     * @throws gCurlException
+     */
+    function setConnectionTimeLimit($seconds){
+        curl_setopt($this->ch,CURLOPT_TIMEOUT,$seconds);
+        if (gCurlException::catchError($this->ch)){
+            throw new gCurlException(22);
+        }
+    }
+
+    /**
+     * Set the network interface for the outgoing connection.
+     * The list of available interfaces can be found with a system commands
+     * "ifconfig" in Unix or "ipconfig" in Windows
+     *
+     * @param string $interface
+     */
+    function setNetworkInterface($interface){
+        $this->interface = $interface;
+        curl_setopt($this->ch,CURLOPT_INTERFACE,$this->interface);
+    }
+
+    /**
+     * Use a private key for SSL connection
+     *
+     * @param string $key_path - filename
+     * @param string $password
+     */
+    function setPrivateKey($key_path,$password = ''){
+        curl_setopt($this->ch,CURLOPT_SSLKEY,$key_path);
+        if ($password !==''){
+            curl_setopt($this->ch,CURLOPT_SSLKEYPASSWD,$password);
+        }
+    }
+
+    /**
+     * Use an SSL certificate key for an SSL connection with the key authentication
+     *
+     * @param string $crt_path - filename
+     * @param string $password
+     */
+    function setCertificate($crt_path,$password=''){
+        curl_setopt($this->ch,CURLOPT_SSLCERT,$crt_path);
+        if ($password !==''){
+            curl_setopt($this->ch,CURLOPT_SSLCERTPASSWD,$password);
+        }
+    }
+
+
+    /**
+     * Set extra options for the connection, passed as an array
+     *
+     * @param array $options
+     */
+    function setFromArray(array $options){
+        if ($this->is_prepared){
+            throw new gCurlException(25);
+        }
+        curl_setopt_array($this->ch,$options);
     }
 }
