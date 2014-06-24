@@ -23,7 +23,7 @@ class Single
      * Instance of the gCurlRequest object
      * see gCurlRequest.class.php
      *
-     * @var Request
+     * @var GetRequest
      * 
      */
 	protected $Request;
@@ -43,7 +43,7 @@ class Single
 	/**
 	 * instance of the URI class
 	 *
-	 * @var gURI
+	 * @var URI
 	 */
 	protected $URI;
 
@@ -62,13 +62,6 @@ class Single
 	protected $request_counter;
 
 	/**
-	 * Full URL requested
-	 *
-	 * @var string
-	 */
-	protected $location_href= '';
-
-	/**
      * Flag that defines if cURL should return the body of the response
      *
      * @var bool
@@ -76,7 +69,7 @@ class Single
     private $return_transfer=1;
     
     /**
-     * The flag showin that the request is ready to be sent
+     * The flag shows the request is ready to be sent
      * Set by prepare() method after setting all headers
      *
      * @var bool
@@ -95,15 +88,14 @@ class Single
 	 */
 	public static function GET($uri,$params = [])
 	{
-		$GCurl = new Single($uri);
+		$Request = new GetRequest($uri);
+		$GCurl = new Single($Request);
 		if ($params) {
 			foreach ($params as $k => $v) {
-				$GCurl->Request->addGetVar($k, $v);
+				$Request->addGetVar($k, $v);
 			}
 		}
-		$Response = $GCurl->exec();
-		unset($GCurl);
-		return $Response;
+		return $GCurl->exec();
 	}
 
 	/**
@@ -117,16 +109,34 @@ class Single
 	 */
 	public static function POST($uri,$params)
 	{
-		$GCurl = new Single($uri);
-		$GCurl->Request->s
+		$Request = new PostRequest($uri);
+		$GCurl = new Single($Request);
 		if ($params) {
 			foreach ($params as $k => $v) {
-				$GCurl->Request->addGetVar($k, $v);
+				$Request->addPostVar($k, $v);
 			}
 		}
-		$Response = $GCurl->exec();
-		unset($GCurl);
-		return $Response;
+		return $GCurl->exec();
+	}
+
+	/**
+	 * A shortcut to make a PUT request
+	 * Usage: $Response = \GCurl\Single::PUT($url,$file_path);
+	 * echo $Response;
+	 *
+	 * @param $uri
+	 * @param string $file_path
+	 * @return \GCurl\Response
+	 */
+	public function PUT_FILE($uri,$file_path) {
+		$Request = new PutRequest($uri);
+		$Request->sendFile($file_path);
+		$GCurl = new Single($Request);
+		return $GCurl->exec();
+	}
+
+	public function PUT_STRING() {
+
 	}
 
 	/**
@@ -135,9 +145,9 @@ class Single
 	 * @param $url
 	 * @param string $method
 	 * @throws Exception
-	 * @return \GKS\GCurl\Single
+	 * @return \GCurl\Single
 	 */
-	public function __construct($uri = '')
+	public function __construct(GetRequest $Request)
     {
         if (!defined('CURLE_OK')) {
             throw new Exception(10);
@@ -148,18 +158,10 @@ class Single
             throw new Exception(15);
         }
 
-	    $this->URI = new gURI();
-	    //prepare the URL to browse to
-	    $this->URI->process($uri);
-	    $this->location_href = $this->URI->full;
+	    $this->Request = $Request;
+	    $this->URI = $this->Request->getURI();
+        $this->Response = new Response($this->ch, $this->URI);
 
-	    //create request and response objects
-	    $this->Request = new GetRequest();
-	    $this->Request->setURI($this->URI);
-
-        $this->Response = new Response($this->ch);
-        $this->Response->setURI($this->URI);
-        
         $this->Options = new Options($this->ch);
         $this->Options->setBasicParams();
         //set the response headers handler
@@ -172,17 +174,13 @@ class Single
 	 * @param string $new_uri
 	 * @param string $method
 	 */
-	public function redirect($new_uri,$method='GET')
+	public function redirect($new_uri)
 	{
-        $this->URI->parse_http_redirect($new_uri);
-        $this->location_href = $this->URI->full;
-        
+        $this->URI->redirect($new_uri);
+
         //create request and response objects
-        $this->Request = new Request();
-        $this->Request->setURI($this->URI);
-        $this->Request->setRequestMethod($method);
-        $this->Response->cleanup();
-        $this->Response->setURI($this->URI);
+        $this->Request = new GetRequest($this->URI);
+        $this->Response = new Response($this->ch,$this->URI);
         $this->is_prepared = false;
     }
 
@@ -256,18 +254,6 @@ class Single
             curl_close($this->ch);
         }
         $this->ch = NULL;
-    }
-
-	/**
-	 * Pass the object implementing the handlers
-	 *
-	 * @param Handler $Handler
-	 * @internal param Handler $Handler
-	 */
-	public function setHandlers(Handler $Handler)
-    {
-        $Handler->setGCurlReference($this);
-        $this->Response->setHandlers($Handler);
     }
 
     /**

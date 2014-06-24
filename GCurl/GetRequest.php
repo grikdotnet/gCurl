@@ -70,23 +70,18 @@ class GetRequest
     /**
      * gURI object with parsed URL
      *
-     * @var gURI
+     * @var URI
      */
     private $URI;
 
-	/**
-	 * @param string $uri
-	 */
-	function __construct($uri)
-	{
-
-	}
-
     /**
-     * @param gURI $URI
+     * @param URI $URI
      */
-	public function setURI(gURI $URI){
-        $this->URI = $URI;
+	public function __construct($uri){
+		if (!($uri instanceof URI)) {
+			$uri = new URI($uri);
+		}
+        $this->URI = $uri;
     }
 
 	/**
@@ -165,4 +160,8 @@ class GetRequest
         $this->proxyuser = $user;
         $this->proxypwd = $password;
     }
+
+	function getURI() {
+		return $this->URI;
+	}
 }
