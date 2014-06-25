@@ -61,12 +61,11 @@ class GetRequest
      */
     public $custom_headers = array();
 
-	/**
-	 * a request method (GET, POST, HEAD, OPTIONS)
-	 *
-	 * @var string
-	 */
-	private $method = 'GET';
+    /**
+     * a request method (GET, POST, HEAD, OPTIONS)
+     *
+     * @var string
+     */
     /**
      * gURI object with parsed URL
      *
@@ -74,24 +73,26 @@ class GetRequest
      */
     private $URI;
 
+    const METHOD = 'GET';
+
     /**
      * @param URI $URI
      */
-	public function __construct($uri){
-		if (!($uri instanceof URI)) {
-			$uri = new URI($uri);
-		}
+    public function __construct($uri){
+        if (!($uri instanceof URI)) {
+            $uri = new URI($uri);
+        }
         $this->URI = $uri;
     }
 
-	/**
-	 * Add a variable to send in a query
-	 *
-	 * @param string $var
-	 * @param string $var_value
-	 * @throws Exception
-	 */
-	public function addGetVar($var, $var_value)
+    /**
+     * Add a variable to send in a query
+     *
+     * @param string $var
+     * @param string $var_value
+     * @throws Exception
+     */
+    public function addGetVar($var, $var_value)
     {
         //check parameters
         if (!$var || !is_string($var) || !is_scalar($var_value)){
@@ -103,19 +104,19 @@ class GetRequest
         $this->URI->query = $query;
     }
 
-	/**
-	 * Add a name/value pair to the request coookie
-	 *
-	 * @param string $name
-	 * @param string $value
-	 * @throws Exception
-	 */
-	public function addCookieVar($name,$value)
+    /**
+     * Add a name/value pair to the request coookie
+     *
+     * @param string $name
+     * @param string $value
+     * @throws Exception
+     */
+    public function addCookieVar($name,$value)
     {
-        if (!$name || !is_string($name) || !is_scalar($value)){
+        if (!$name || !is_string($name) || !is_scalar($value)) {
             throw new Exception(51);
         }
-        if ($this->cookie_string){
+        if ($this->cookie_string) {
             $this->cookie_string.=';';
         }
         $this->cookie_string.=urlencode($name).'='.urlencode($value);
@@ -128,7 +129,7 @@ class GetRequest
      * @param string $header
      * @param string $value optional
      */
-	public function registerCustomHeader($header,$value=NULL)
+    public function registerCustomHeader($header,$value=NULL)
     {
         $this->custom_headers[] = $value? ($header .': '.$value) : $header ;
     }
@@ -138,7 +139,7 @@ class GetRequest
      *
      * @param array $headers
      */
-	public function registerCustomHeadersArray(array $headers)
+    public function registerCustomHeadersArray(array $headers)
     {
         for ($i=0,$len=sizeof($headers);$i<$len;++$i){
             $this->custom_headers[] = $headers[$i];
@@ -153,7 +154,7 @@ class GetRequest
      * @param string $user
      * @param string $password
      */
-	public function useProxy($proxy,$port,$user='',$password='')
+    public function useProxy($proxy,$port,$user='',$password='')
     {
         $this->proxy = $proxy;
         $this->proxy_port = $port;
@@ -161,7 +162,8 @@ class GetRequest
         $this->proxypwd = $password;
     }
 
-	function getURI() {
-		return $this->URI;
-	}
+    function getURI()
+    {
+        return $this->URI;
+    }
 }

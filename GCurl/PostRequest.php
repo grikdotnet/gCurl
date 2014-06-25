@@ -24,6 +24,8 @@ class PostRequest extends GetRequest{
 	 */
 	public $post_format = Options::POST_URLENCODED;
 
+	const METHOD = 'POST';
+
 	/**
 	 * Assign the data prepared for the POST request
 	 *
@@ -39,13 +41,13 @@ class PostRequest extends GetRequest{
 	 * Add a variable to the  POST request
 	 *
 	 * @param string $var
-	 * @param string $var_value
-	 * @throws Exception
+	 * @param scalar $var_value
+	 * @throws \GCurl\Exception
 	 */
-	public function addPostVar($var, $var_value = '')
+	public function addPostVar($var, $var_value)
 	{
 		if (!$var || !is_string($var) || !is_scalar($var_value)){
-			throw new Exception(51);
+			throw new \GCurl\Exception(51);
 		}
 		$this->post_data[$var] = $var_value;
 	}
@@ -55,12 +57,12 @@ class PostRequest extends GetRequest{
 	 * gCurl::POST_MULTIPART or gCurl::POST_URLENCODED
 	 *
 	 * @param string $format
-	 * @throws Exception
+	 * @throws \GCurl\Exception
 	 */
 	public function setPostFormat($format)
 	{
 		if ($format !== Options::POST_MULTIPART  && $format != Options::POST_URLENCODED ){
-			throw new Exception(52);
+			throw new \GCurl\Exception(52);
 		}
 		$this->post_format = $format;
 	}

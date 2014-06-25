@@ -9,82 +9,82 @@ namespace GCurl;
  */
 class Options
 {
-	/**
-	 * Constants - flags
-	 */
-	const
-		HTTP_BODY = 1,
-		HTTP_HEADERS=2,
-		HTTP_FULL=3;
-	/**
-	 * sets the status of the data to show the end
-	 */
-	const FLAG_EOF=1;
-	/**
-	 * the HTTP response is received
-	 */
-	const FLAG_HTTP_OK=2;
-	/**
-	 * headers are received and processed
-	 */
-	const FLAG_HEADERS_RECEIVED=4;
-	/**
-	 * HTTP/1.1 100 Continue
-	 * expect real headers further
-	 */
-	const FLAG_CONTINUE=8;
+    /**
+     * Constants - flags
+     */
+    const
+        HTTP_BODY = 1,
+        HTTP_HEADERS=2,
+        HTTP_FULL=3;
+    /**
+     * sets the status of the data to show the end
+     */
+    const FLAG_EOF=1;
+    /**
+     * the HTTP response is received
+     */
+    const FLAG_HTTP_OK=2;
+    /**
+     * headers are received and processed
+     */
+    const FLAG_HEADERS_RECEIVED=4;
+    /**
+     * HTTP/1.1 100 Continue
+     * expect real headers further
+     */
+    const FLAG_CONTINUE=8;
 
-	/**
-	 * POST request format, can be application/x-www-form-urlencoded or multipart/form-data
-	 */
-	const
-		POST_URLENCODED =1,
-		POST_MULTIPART = 2;
+    /**
+     * POST request format, can be application/x-www-form-urlencoded or multipart/form-data
+     */
+    const
+        POST_URLENCODED =1,
+        POST_MULTIPART = 2;
 
-	/**
-	 * Memory for the temporary file to use before creating a temporary file on a disk
-	 * @var int
-	 */
-	public $put_max_tmp_memory = 4194304;
+    /**
+     * Memory for the temporary file to use before creating a temporary file on a disk
+     * @var int
+     */
+    public $put_max_tmp_memory = 4194304;
 
-	/**
-	 * Curl handler
-	 * @var resource
-	 */
-	private $ch;
+    /**
+     * Curl handler
+     * @var resource
+     */
+    private $ch;
 
-	/**
+    /**
      * Path of the cookie jar file assigned to CURL
      * @var string
      */
     private $cookie_jar_file;
 
-	/**
-	 * System network interface (IP)
-	 *
-	 * @var string
-	 */
-	private $interface=null;
+    /**
+     * System network interface (IP)
+     *
+     * @var string
+     */
+    private $interface=null;
 
-	public function __construct($ch)
+    public function __construct($ch)
     {
         $this->ch = $ch;
     }
 
-	public function __destruct()
-	{
-        if ($this->cookie_jar_file){
-            @unlink($this->cookie_jar_file);
+    public function __destruct()
+    {
+        if ($this->cookie_jar_file && is_file($this->cookie_jar_file)){
+            unlink($this->cookie_jar_file);
         }
     }
 
-	public function setFollowLocation($value)
-	{
+    public function setFollowLocation($value)
+    {
         curl_setopt ($this->ch, CURLOPT_FOLLOWLOCATION, $value);
     }
 
-	public function setHeadersHandler(callable $callback)
-	{
+    public function setHeadersHandler(callable $callback)
+    {
         curl_setopt ($this->ch, CURLOPT_HEADERFUNCTION, $callback);
     }
 
@@ -92,27 +92,27 @@ class Options
      * Assign the callback for the curl
      * @param $callback callable
      */
-	public function setBodyHandler($callback)
+    public function setBodyHandler($callback)
     {
         curl_setopt($this->ch,CURLOPT_WRITEFUNCTION,$callback);
     }
 
-	/**
-	 *
-	 */
-	public function setBasicParams()
-	{
+    /**
+     *
+     */
+    public function setBasicParams()
+    {
         curl_setopt ($this->ch, CURLOPT_HEADER, 0);
         curl_setopt ($this->ch, CURLOPT_FOLLOWLOCATION, false);
         curl_setopt ($this->ch, CURLOPT_ENCODING, '');
         curl_setopt ($this->ch, CURLOPT_RETURNTRANSFER, 1);
     }
 
-	/**
-	 * @param Request $Request
-	 */
-	public function requestInit(Request $Request)
-	{
+    /**
+     * @param Request $Request
+     */
+    public function requestInit(GetRequest $Request)
+    {
 
         curl_setopt ($this->ch, CURLOPT_URL, (string)$Request->getURI());
 
@@ -126,12 +126,12 @@ class Options
         curl_setopt ($this->ch, CURLOPT_HTTPHEADER, array());
 
         //prepare the POST data
-        if (strcasecmp($Request->method, 'POST')==0){
+        if (strcasecmp($Request::METHOD, 'POST')==0){
             curl_setopt ($this->ch, CURLOPT_POST, 1);
             if ($Request->post_data){
                 curl_setopt ($this->ch,CURLOPT_POSTFIELDS, $Request->post_data);
             }
-        }elseif ($Request->method !== 'GET'){
+        }elseif ($Request::METHOD !== 'GET'){
             curl_setopt ($this->ch,CURLOPT_CUSTOMREQUEST,$Request->method);
         }
 
@@ -161,8 +161,8 @@ class Options
      * Sets the name of a file used to store cookies
      * @param $file
      */
-	public function setCookieJar($file)
-	{
+    public function setCookieJar($file)
+    {
         curl_setopt($this->ch,CURLOPT_COOKIEFILE,$file);
         curl_setopt($this->ch,CURLOPT_COOKIEJAR,$file);
 
@@ -175,8 +175,8 @@ class Options
      * @param $seconds
      * @throws Exception
      */
-	public function setConnectionTimeLimit($seconds)
-	{
+    public function setConnectionTimeLimit($seconds)
+    {
         curl_setopt($this->ch,CURLOPT_TIMEOUT,$seconds);
         if (Exception::catchError($this->ch)){
             throw new Exception(22);
@@ -190,8 +190,8 @@ class Options
      *
      * @param string $interface
      */
-	public function setNetworkInterface($interface)
-	{
+    public function setNetworkInterface($interface)
+    {
         $this->interface = $interface;
         curl_setopt($this->ch,CURLOPT_INTERFACE,$this->interface);
     }
@@ -202,8 +202,8 @@ class Options
      * @param string $key_path - filename
      * @param string $password
      */
-	public function setPrivateKey($key_path,$password = '')
-	{
+    public function setPrivateKey($key_path,$password = '')
+    {
         curl_setopt($this->ch,CURLOPT_SSLKEY,$key_path);
         if ($password !==''){
             curl_setopt($this->ch,CURLOPT_SSLKEYPASSWD,$password);
@@ -216,38 +216,38 @@ class Options
      * @param string $crt_path - filename
      * @param string $password
      */
-	public function setCertificate($crt_path,$password='')
-	{
+    public function setCertificate($crt_path,$password='')
+    {
         curl_setopt($this->ch,CURLOPT_SSLCERT,$crt_path);
         if ($password !==''){
             curl_setopt($this->ch,CURLOPT_SSLCERTPASSWD,$password);
         }
     }
 
-	/**
-	 * Use a file on a disk content for the PUT data
-	 * @param $filename string
-	 */
-	public function setPutFile($filename)
-	{
-		$fh = fopen($filename,'r');
-		if (!$fh){
-			throw new Exception(401);
-		}
-		curl_setopt($this->ch, CURLOPT_PUT, 1);
-		curl_setopt($this->ch, CURLOPT_BINARYTRANSFER, true);
-		curl_setopt($this->ch, CURLOPT_INFILE, $fh);
-		curl_setopt($this->ch, CURLOPT_INFILESIZE, filesize($filename));
-	}
+    /**
+     * Use a file on a disk content for the PUT data
+     * @param $filename string
+     */
+    public function setPutFile($filename)
+    {
+        $fh = fopen($filename,'r');
+        if (!$fh){
+            throw new Exception(401);
+        }
+        curl_setopt($this->ch, CURLOPT_PUT, 1);
+        curl_setopt($this->ch, CURLOPT_BINARYTRANSFER, true);
+        curl_setopt($this->ch, CURLOPT_INFILE, $fh);
+        curl_setopt($this->ch, CURLOPT_INFILESIZE, filesize($filename));
+    }
 
-	/**
-	 *
-	 */
-	public function setPutContent($content)
-	{
-		$fp = fopen('php://temp/maxmemory:', 'w');
+    /**
+     *
+     */
+    public function setPutContent($content)
+    {
+        $fp = fopen('php://temp/maxmemory:', 'w');
 
-	}
+    }
 
 
 }

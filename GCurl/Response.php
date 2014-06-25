@@ -24,28 +24,28 @@ class Response
      * @var array
      */
     public $headers= array('len'=>0);
-    
+
     /**
      * HTTP response status code
      *
      * @var int
      */
     public $status_code;
-    
+
     /**
      * HTTP response class
      *
      * @var int
      */
     public $status_class;
-    
+
     /**
      * Content type of the response body
      *
      * @var string
      */
     public $content_type;
-    
+
     /**
      * Cookies from the response conveniently parsed
      *
@@ -59,7 +59,7 @@ class Response
      * @var Handlers
      */
     public $Handlers;
-    
+
     /**
      * Curl connection handler
      *
@@ -94,14 +94,14 @@ class Response
      * @var array
      */
     private $body_handler;
-    
+
     /**
      * Cookies handler
      *
      * @var array
      */
     private $cookies_handler;
-    
+
     /**
      * Binary flags to define parameters
      *
@@ -117,27 +117,21 @@ class Response
      */
     const INTERRUPT_BODY_HANDLER = 1000;
 
-	/**
-	 * Class constructor - needs a Curl handler and a gURI instance as parameters
-	 *
-	 * @param resource $ch
-	 */
-    function __construct($ch)
+    /**
+     * Class constructor - needs a Curl handler and a URI instance as parameters
+     *
+     * @param resource $ch
+     * @param URI $URI
+     */
+    function __construct($ch, URI $URI)
     {
         $this->ch = $ch;
-    }
-
-    /**
-     * @param gURI $URI
-     */
-    function setURI(gURI $URI)
-    {
         $this->URI = $URI;
     }
 
     /**
      * Get header values by header name (case insensitive)
-     * 
+     *
      * @param string $header_name
      * @return array
      */
@@ -156,7 +150,7 @@ class Response
     /**
      * Get single header value by header name (case insensitive)
      * Returns NULL if the requested header was not received
-     * 
+     *
      * @param string $header_name
      * @return string|null
      */
@@ -175,14 +169,14 @@ class Response
         return null;
     }
 
-	/**
-	 * The function is called for each header line
-	 *
-	 * @param resource $ch - Curl handler resource
-	 * @param string $header_line - line of a header
-	 * @throws Exception
-	 * @return int
-	 */
+    /**
+     * The function is called for each header line
+     *
+     * @param resource $ch - Curl handler resource
+     * @param string $header_line - line of a header
+     * @throws Exception
+     * @return int
+     */
     public function headersHandler($ch, $header_line)
     {
         //the length of the header should be returned
@@ -227,7 +221,7 @@ class Response
             $last_num = $this->headers['len']--;
             //create the new full header line
             $full_header = $this->headers[$last_num]['name']
-	            .': '.$this->headers[$last_num]['value'] .' '.trim($header_line);
+                .': '.$this->headers[$last_num]['value'] .' '.trim($header_line);
             // reprocess it
             $last_header_name = $this->headers[$last_num]['name'];
             $this->headers[$last_num]['value']=null;
@@ -236,12 +230,12 @@ class Response
             $this->headersHandler($ch,$full_header);
             return $header_len;
         }
-        
+
         // it is a generic header line
         $this->processHeaderLine($header_line);
         return $header_len;
     }
-    
+
     /**
      * Process the generic header
      *
@@ -269,7 +263,7 @@ class Response
         //link the array to the headers value
         if ( ( isset($this->headers[$name]) &&
             (!is_array($this->headers[$name]) || !array_key_exists('len', $this->headers[$name]))
-	        ) || empty ($this->headers[$name]['len'])
+            ) || empty ($this->headers[$name]['len'])
         ) {
             $this->headers[$name] = array(
                 'len' => 1,
@@ -322,9 +316,9 @@ class Response
                 curl_setopt($this->ch,CURLOPT_NOBODY,true);
                 break;
         }
-        
+
     }
-    
+
     /**
      * Call header and cookie handler, set body handler
      *
@@ -452,7 +446,7 @@ class Response
 
     /**
      * Pass the object implementing the handlers
-     * 
+     *
      * @param Handlers $Handlers
      */
     function setHandlers(Handlers $Handlers=null)
@@ -463,14 +457,14 @@ class Response
         $this->Handlers = $Handlers;
     }
 
-	/**
-	 * @param $ch
-	 * @param $data
-	 * @return int
-	 * @throws Exception
-	 */
-	function bodyHandlerIntermediate($ch,$data)
-	{
+    /**
+     * @param $ch
+     * @param $data
+     * @return int
+     * @throws Exception
+     */
+    function bodyHandlerIntermediate($ch,$data)
+    {
         try {
             $this->Handlers->bodyHandler($data);
         } catch (Exception $E) {
@@ -494,7 +488,7 @@ class Response
         $this->headers=array('len'=>0);
         $this->body_handler=$this->cookies_handler=$this->headers_handler=$this->Handlers=null;
     }
-    
+
     /**
      * return the response body when the object is echo-ed or casted to string
      *
