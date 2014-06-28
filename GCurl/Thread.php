@@ -1,6 +1,6 @@
 <?php
 
-namespace GKS\GCurl;
+namespace GCurl;
 
 /**
  * cURL Thread is a class used to set hooks and emulate the multi-thread execution

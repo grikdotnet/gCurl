@@ -14,8 +14,15 @@ namespace GCurl;
  * A class to simplify complex tasks for performing and processing HTTP requests with CURL
  *
  * @package GCurl
+ * @version 2
  * @author Grigori Kochanov
- * @version 3
+ *
+ * @property IRequest $Request
+ * @property Response $Response
+ * @property Options $Options
+ * @property URI $URI
+ * @property resource $ch
+ * @property int $request_counter
  */
 class Single
 {
@@ -23,7 +30,7 @@ class Single
      * Instance of the gCurlRequest object
      * see gCurlRequest.class.php
      *
-     * @var GetRequest
+     * @var IRequest
      * 
      */
     protected $Request;
@@ -61,12 +68,6 @@ class Single
      */
     protected $request_counter;
 
-    /**
-     * Flag that defines if cURL should return the body of the response
-     *
-     * @var bool
-     */
-    private $return_transfer=1;
     
     /**
      * The flag shows the request is ready to be sent
@@ -109,7 +110,7 @@ class Single
      */
     public static function POST($uri,$params)
     {
-        $Request = new PostRequest($uri);
+        $Request = new PostUrlencodedRequest($uri);
         $GCurl = new Single($Request);
         if ($params) {
             foreach ($params as $k => $v) {
@@ -129,8 +130,7 @@ class Single
      * @return \GCurl\Response
      */
     public function PUT($uri,$file_path) {
-        $Request = new PutRequest($uri);
-        $Request->sendFile($file_path);
+        $Request = new PutFileRequest($uri,$file_path);
         $GCurl = new Single($Request);
         return $GCurl->exec();
     }
@@ -138,20 +138,21 @@ class Single
     /**
      * Constructor of the class
      *
-     * @param $url
-     * @param string $method
+     * @param IRequest $Request
      * @throws Exception
+     * @internal param $url
+     * @internal param string $method
      * @return \GCurl\Single
      */
-    public function __construct(GetRequest $Request)
+    public function __construct(IRequest $Request)
     {
         if (!defined('CURLE_OK')) {
-            throw new Exception(10);
+            throw new \GCurl\Exception(10);
         }
 
         $this->ch = curl_init();
         if (!$this->ch || Exception::catchError($this->ch)) {
-            throw new Exception(15);
+            throw new \GCurl\Exception(15);
         }
 
         $this->Request = $Request;
@@ -168,7 +169,6 @@ class Single
      * signal a redirect URL
      *
      * @param string $new_uri
-     * @param string $method
      */
     public function redirect($new_uri)
     {
@@ -181,30 +181,6 @@ class Single
     }
 
     /**
-     * Define whether to return the transfer or not
-     *
-     * @param bool $value
-     * @throws Exception
-     */
-    public function returnTransfer($value)
-    {
-        if ($this->is_prepared) {
-            throw new Exception(25);
-        }
-        $this->return_transfer=(bool)$value;
-    }
-
-    /**
-     * Assign request headers, request parameters and data for POST, set proxy and 
-     * clear settings of a previous request
-     */
-    public function prepare()
-    {
-        $this->Options->requestInit($this->Request);
-        $this->is_prepared = true;
-    }
-
-    /**
      * Run the CURL engine
      *
      * @throws Exception
@@ -213,29 +189,26 @@ class Single
     public function exec()
     {
         if (!$this->is_prepared){
-            $this->prepare();
+            $this->Request->prepare($this->Options);
+            $this->is_prepared = true;
         }
         //run the request
         ++$this->request_counter;
-        if ($this->return_transfer){
-            $result = curl_exec($this->ch);
-        }else{
-            curl_exec($this->ch);
-            $result='';
-        }
-        //clear the reference in the handler to avoid circular references
-        if ($this->Response->Handlers){
-            $this->Response->Handlers->cleanGCurlReference();
-        }
-        
-        if ($this->return_transfer && !$result && !$this->Response->headers['len']){
+
+        $result = curl_exec($this->ch);
+
+        if ($this->Options->returnTransfer() && !$result && !$this->Response->headers['len']){
             throw new Exception(115);
         }
+
+        $this->Request->onRequestEnd();
+
         //return the response data if required
-        if ($this->return_transfer && is_string($result)){
+        if ($this->Options->returnTransfer() && is_string($result)){
             $this->Response->body = $result;
         }
         $this->is_prepared = false;
+
         return $this->Response;
     }
 

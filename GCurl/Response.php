@@ -65,7 +65,7 @@ class Response
      *
      * @var resource
      */
-    public $ch;
+    private $ch;
 
     /**
      * Ignore the content-type response header, report the predefined one
@@ -77,7 +77,7 @@ class Response
     /**
      * Instance of an gURI class with URI details
      *
-     * @var gURI
+     * @var URI
      */
     private $URI;
 
@@ -123,7 +123,7 @@ class Response
      * @param resource $ch
      * @param URI $URI
      */
-    function __construct($ch, URI $URI)
+    public function __construct($ch, URI $URI)
     {
         $this->ch = $ch;
         $this->URI = $URI;
@@ -237,6 +237,77 @@ class Response
     }
 
     /**
+     * Force reporting the data as given content-type
+     *
+     * @param string $content_type
+     */
+    public function forceContentType($content_type)
+    {
+        if ($content_type == 'css') {
+            $content_type = 'text/css';
+        } elseif ($content_type == 'js') {
+            $content_type = 'text/javascript';
+        }
+
+        $this->force_content_type=strtolower($content_type);
+    }
+
+    /**
+     * Pass the object implementing the handlers
+     *
+     * @param Handlers $Handlers
+     */
+    public function setHandlers(Handlers $Handlers=null)
+    {
+        if (!$Handlers) {
+            return ;
+        }
+        $this->Handlers = $Handlers;
+    }
+
+    /**
+     * @param $ch
+     * @param $data
+     * @return int
+     * @throws Exception
+     */
+    public function bodyHandlerIntermediate($ch,$data)
+    {
+        try {
+            $this->Handlers->bodyHandler($data);
+        } catch (Exception $E) {
+            if ($E->getCode() == Response::INTERRUPT_BODY_HANDLER ) {
+                return -1;
+            }
+            throw $E;
+        }
+        return strlen($data);
+    }
+
+    /**
+     * Clean all fields, flags and handlers
+     *
+     */
+    public function cleanup()
+    {
+        $this->body=$this->content_type=$this->force_content_type='';
+        $this->flags=$this->status_class=$this->status_code=0;
+        $this->cookies=array();
+        $this->headers=array('len'=>0);
+        $this->body_handler=$this->cookies_handler=$this->headers_handler=$this->Handlers=null;
+    }
+
+    /**
+     * return the response body when the object is echo-ed or casted to string
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->body;
+    }
+
+    /**
      * Process the generic header
      *
      * @param string $header_line
@@ -262,7 +333,7 @@ class Response
         //create the associative array for faster search
         //link the array to the headers value
         if ( ( isset($this->headers[$name]) &&
-            (!is_array($this->headers[$name]) || !array_key_exists('len', $this->headers[$name]))
+                (!is_array($this->headers[$name]) || !array_key_exists('len', $this->headers[$name]))
             ) || empty ($this->headers[$name]['len'])
         ) {
             $this->headers[$name] = array(
@@ -340,7 +411,7 @@ class Response
                 return false;
             }
             if ($this->cookies) {
-                 //call cookies handler
+                //call cookies handler
                 $this->Handlers->cookiesHandler($this->cookies);
             }
             //if the body handler is defined - assign it to CURL
@@ -427,76 +498,4 @@ class Response
 
         $this->cookies[]=$cookie;
     }
-
-    /**
-     * Force reporting the data as given content-type
-     *
-     * @param string $content_type
-     */
-    function forceContentType($content_type)
-    {
-        if ($content_type == 'css') {
-            $content_type = 'text/css';
-        } elseif ($content_type == 'js') {
-            $content_type = 'text/javascript';
-        }
-
-        $this->force_content_type=strtolower($content_type);
-    }
-
-    /**
-     * Pass the object implementing the handlers
-     *
-     * @param Handlers $Handlers
-     */
-    function setHandlers(Handlers $Handlers=null)
-    {
-        if (!$Handlers) {
-            return ;
-        }
-        $this->Handlers = $Handlers;
-    }
-
-    /**
-     * @param $ch
-     * @param $data
-     * @return int
-     * @throws Exception
-     */
-    function bodyHandlerIntermediate($ch,$data)
-    {
-        try {
-            $this->Handlers->bodyHandler($data);
-        } catch (Exception $E) {
-            if ($E->getCode() == Response::INTERRUPT_BODY_HANDLER ) {
-                return -1;
-            }
-            throw $E;
-        }
-        return strlen($data);
-    }
-
-    /**
-     * Clean all fields, flags and handlers
-     *
-     */
-    function cleanup()
-    {
-        $this->body=$this->content_type=$this->force_content_type='';
-        $this->flags=$this->status_class=$this->status_code=0;
-        $this->cookies=array();
-        $this->headers=array('len'=>0);
-        $this->body_handler=$this->cookies_handler=$this->headers_handler=$this->Handlers=null;
-    }
-
-    /**
-     * return the response body when the object is echo-ed or casted to string
-     *
-     * @return string
-     */
-    function __toString()
-    {
-        return $this->body;
-    }
-
 }

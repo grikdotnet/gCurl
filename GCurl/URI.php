@@ -177,24 +177,15 @@ class URI{
         $this->query = $new_query;
     }
 
-    /**
-     * compile the full uri and return the string
-     *
-     * @return string
-     */
-    function get_full_uri(){
-        return $this->scheme.$this->scheme_delim.
-            $this->user.$this->pass_delim.$this->pass.$this->user_delim.
-            $this->host.
-            $this->port.$this->port_delim.
-            $this->path.
-            $this->query_delim.$this->query.
-            $this->fragment_delim.$this->fragment
-            ;
-    }
-
     function __toString(){
-        return $this->get_full_uri();
+        return $this->scheme.$this->scheme_delim.
+        $this->user.$this->pass_delim.$this->pass.$this->user_delim.
+        $this->host.
+        $this->port.$this->port_delim.
+        $this->path.
+        $this->query_delim.$this->query.
+        $this->fragment_delim.$this->fragment
+            ;
     }
 
     /**

@@ -9,46 +9,14 @@ namespace GCurl;
  * @author Grigori Kochanov
  * @version 3
  */
-class GetRequest
+class GetRequest implements IRequest
 {
-    /**
-     * address of the proxy to use or NULL to use a direct connection
-     *
-     * @var string
-     */
-    public $proxy;
-    /**
-     * port of the proxy
-     *
-     * @var int
-     */
-    public $proxy_port = 3128;
-    /**
-     * login for the proxy authorisation
-     *
-     * @var string
-     */
-    public $proxyuser = '';
-    /**
-     * password for the proxy authorisation
-     *
-     * @var string
-     */
-    public $proxypwd = '';
-    /**
-     * cookies joined and ready to be sent
-     *
-     * @var string
-     */
-    public $cookie_string = '';
-    
     /**
      * History of requests and data sent
      *
      * @var array
      */
     public $history = array(
-                    'requests_count'=>0,
                     'request_headers'=>array(),
                     'sent_data'=>''
                 );
@@ -59,7 +27,7 @@ class GetRequest
      *
      * @var array
      */
-    public $custom_headers = array();
+    private $custom_headers = [];
 
     /**
      * a request method (GET, POST, HEAD, OPTIONS)
@@ -73,6 +41,13 @@ class GetRequest
      */
     private $URI;
 
+    /**
+     * Cookies added via addCookie() method
+     *
+     * @var array
+     */
+    private $cookies = [];
+
     const METHOD = 'GET';
 
     /**
@@ -83,6 +58,16 @@ class GetRequest
             $uri = new URI($uri);
         }
         $this->URI = $uri;
+    }
+
+    /**
+     * Initialize curl
+     * @param Options $Options
+     */
+    public function prepare(Options $Options)
+    {
+        $Options->commonRequestInit($this);
+        $Options->initGetRequest($this);
     }
 
     /**
@@ -111,15 +96,29 @@ class GetRequest
      * @param string $value
      * @throws Exception
      */
-    public function addCookieVar($name,$value)
+    public function addCookie($name,$value)
     {
         if (!$name || !is_string($name) || !is_scalar($value)) {
             throw new Exception(51);
         }
-        if ($this->cookie_string) {
-            $this->cookie_string.=';';
+        $this->cookies[] = [$name,$value];
+    }
+
+    /**
+     * Get cookies in a format to send in request
+     *
+     * @return string
+     */
+    public function getCookieString()
+    {
+        $cookie_string = '';
+        foreach ($this->cookies as $c) {
+            $cookie_string.=urlencode($c[0]).'='.urlencode($c[1]);
         }
-        $this->cookie_string.=urlencode($name).'='.urlencode($value);
+        if ($cookie_string !== '') {
+            $cookie_string.=';';
+        }
+        return $cookie_string;
     }
 
     /**
@@ -129,41 +128,33 @@ class GetRequest
      * @param string $header
      * @param string $value optional
      */
-    public function registerCustomHeader($header,$value=NULL)
+    public function addHeader($header,$value='')
     {
         $this->custom_headers[] = $value? ($header .': '.$value) : $header ;
     }
-    
+
     /**
-     * Add a bunch of custom request headers
+     * Returns request headers to register via curl_setopt()
      *
-     * @param array $headers
+     * @return array
      */
-    public function registerCustomHeadersArray(array $headers)
+    public function getHeaders()
     {
-        for ($i=0,$len=sizeof($headers);$i<$len;++$i){
-            $this->custom_headers[] = $headers[$i];
+        if ($this->cookies){
+            return array_merge($this->custom_headers,['Cookie: '.$this->getCookieString()]);
         }
-    }
-        
-    /**
-     * Set parameters to use proxy
-     *
-     * @param string $proxy IP address
-     * @param string $port
-     * @param string $user
-     * @param string $password
-     */
-    public function useProxy($proxy,$port,$user='',$password='')
-    {
-        $this->proxy = $proxy;
-        $this->proxy_port = $port;
-        $this->proxyuser = $user;
-        $this->proxypwd = $password;
+        return $this->custom_headers;
     }
 
+    /**
+     * @return URI
+     */
     function getURI()
     {
         return $this->URI;
+    }
+
+    function onRequestEnd()
+    {
     }
 }

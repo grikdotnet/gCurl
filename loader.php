@@ -2,9 +2,9 @@
 /**
  *
  * After registering this autoload function with SPL, the following line
- * would cause the function to attempt to load the \GKS\GCurl class
+ * would cause the function to attempt to load a \GCurl class
  *
- *      new \GKS\GCurl\Single([$url]);
+ *      new \GCurl\Single([$url]);
  *
  * @param string $class The fully-qualified class name.
  * @return void

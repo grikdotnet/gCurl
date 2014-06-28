@@ -1,6 +1,6 @@
 <?php
 
-namespace GKS\GCurl;
+namespace GCurl;
 
 class overrideReflectionClass extends \ReflectionClass
 {

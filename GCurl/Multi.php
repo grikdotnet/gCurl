@@ -1,5 +1,5 @@
 <?php
-namespace GKS\GCurl;
+namespace GCurl;
 
 /**
  * Main cURL Multi class
