@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 interface Handlers
 {

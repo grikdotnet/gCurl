@@ -6,8 +6,12 @@
  * Time: 20:47
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
+
+use GCurl\scalar;
+use grikdotnet\curl\GetRequest;
+use grikdotnet\curl\Options;
 
 class PostRequest extends GetRequest{
 	/**
@@ -42,12 +46,12 @@ class PostRequest extends GetRequest{
 	 *
 	 * @param string $var
 	 * @param scalar $var_value
-	 * @throws \GCurl\Exception
+	 * @throws \grikdotnet\curl\Exception
 	 */
 	public function addPostVar($var, $var_value)
 	{
 		if (!$var || !is_string($var) || !is_scalar($var_value)){
-			throw new \GCurl\Exception(51);
+			throw new \grikdotnet\curl\Exception(51);
 		}
 		$this->post_data[$var] = $var_value;
 	}
@@ -57,12 +61,12 @@ class PostRequest extends GetRequest{
 	 * gCurl::POST_MULTIPART or gCurl::POST_URLENCODED
 	 *
 	 * @param string $format
-	 * @throws \GCurl\Exception
+	 * @throws \grikdotnet\curl\Exception
 	 */
 	public function setPostFormat($format)
 	{
 		if ($format !== Options::POST_MULTIPART  && $format != Options::POST_URLENCODED ){
-			throw new \GCurl\Exception(52);
+			throw new \grikdotnet\curl\Exception(52);
 		}
 		$this->post_format = $format;
 	}

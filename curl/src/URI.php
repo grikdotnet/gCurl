@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * Parses a URI, provides details and a full correctly composed URI, processes a relative URI redirect
@@ -90,7 +90,7 @@ class URI{
      */
     function __construct($new_uri){
         if (!is_string($new_uri)){
-            throw new \GCurl\Exception(125);
+            throw new Exception(125);
         }
         if (strpos($new_uri, '://') === false && substr(0,2)!== '//'){
             $new_uri = 'http://'.$new_uri;
@@ -99,7 +99,7 @@ class URI{
         //parse current url - get parts
         $uri_array = parse_url($new_uri);
         if (!$uri_array){
-            throw new \GCurl\Exception(125);
+            throw new Exception(125);
         }
 
         //set varables with parts of URI
@@ -141,7 +141,7 @@ class URI{
      */
     function redirect ($new_url){
         if (!$new_url || !is_string($new_url)){
-            throw new \GCurl\Exception(125);
+            throw new Exception(125);
         }
 
         //check if URL is absolute

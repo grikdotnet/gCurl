@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * cURL Thread is a class used to set hooks and emulate the multi-thread execution
@@ -94,21 +94,21 @@ class Thread implements Handlers
      * This method returns the URI for the request.
      * It should be redefined to provide URLs from the custom sources
      *
-     * @return gURI
+     * @return URI
      */
     public function getUri()
     {
         if ($this->redirect){
             $this->redirect = null;
             if (!$this->Request->getURI()){
-                return new gURI($this->redirect);
+                return new URI($this->redirect);
             }
             if (!$this->Request->getURI()->parse_http_redirect($this->redirect)){
                 return false;
             }
             return $this->Request->getURI();
         }
-        return new gURI($this->url);
+        return new URI($this->url);
     }
 
     /**
@@ -122,7 +122,7 @@ class Thread implements Handlers
 	{
         $this->Request = new Request();
         $uri = $this->getUri();
-        if (!($uri instanceof gURI)){
+        if (!($uri instanceof URI)){
             return false;
         }
         $this->Request->setURI($uri);

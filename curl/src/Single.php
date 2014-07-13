@@ -8,7 +8,7 @@
  * @version 2.7
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * A class to simplify complex tasks for performing and processing HTTP requests with CURL
@@ -85,7 +85,7 @@ class Single
      *
      * @param $uri
      * @param array $params
-     * @return \GCurl\Response
+     * @return \grikdotnet\curl\Response
      */
     public static function GET($uri,$params = [])
     {
@@ -106,7 +106,7 @@ class Single
      *
      * @param $uri
      * @param array $params
-     * @return \GCurl\Response
+     * @return \grikdotnet\curl\Response
      */
     public static function POST($uri,$params)
     {
@@ -127,7 +127,7 @@ class Single
      *
      * @param $uri
      * @param string $file_path
-     * @return \GCurl\Response
+     * @return \grikdotnet\curl\Response
      */
     public function PUT($uri,$file_path) {
         $Request = new PutFileRequest($uri,$file_path);
@@ -142,17 +142,17 @@ class Single
      * @throws Exception
      * @internal param $url
      * @internal param string $method
-     * @return \GCurl\Single
+     * @return Single
      */
     public function __construct(IRequest $Request)
     {
         if (!defined('CURLE_OK')) {
-            throw new \GCurl\Exception(10);
+            throw new Exception(10);
         }
 
         $this->ch = curl_init();
         if (!$this->ch || Exception::catchError($this->ch)) {
-            throw new \GCurl\Exception(15);
+            throw new Exception(15);
         }
 
         $this->Request = $Request;

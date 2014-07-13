@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * This class contains curl_setopt() calls and connection parameters
@@ -118,6 +118,7 @@ class Options
      * Define whether to return the transfer or not
      *
      * @param bool $value
+     * @return bool
      * @throws Exception
      */
     public function returnTransfer($value = null)

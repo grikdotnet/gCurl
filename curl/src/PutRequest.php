@@ -6,7 +6,7 @@
  * Time: 18:58
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 
 class PutRequest {

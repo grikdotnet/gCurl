@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * The class extending this interface will contain methods that will be used as handlers

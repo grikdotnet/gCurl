@@ -3,7 +3,7 @@
  * Provides typehinting for request classes
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 
 interface IRequest {

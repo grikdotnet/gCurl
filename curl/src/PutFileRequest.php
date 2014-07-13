@@ -3,7 +3,7 @@
  * Class prepares a PUT request that sends a file
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 class PutFileRequest extends GetRequest
 {

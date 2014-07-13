@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * Request-related data and methods to prepare the request
@@ -51,7 +51,7 @@ class GetRequest implements IRequest
     const METHOD = 'GET';
 
     /**
-     * @param URI $URI
+     * @param URI|string $uri
      */
     public function __construct($uri){
         if (!($uri instanceof URI)) {

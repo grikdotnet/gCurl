@@ -3,8 +3,7 @@
  * Class prepares a PUT request with data taken from a variable
  */
 
-namespace GCurl;
-
+namespace grikdotnet\curl;
 
 class PutStringRequest extends PostUrlencodedRequest
 {

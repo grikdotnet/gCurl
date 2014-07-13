@@ -1,6 +1,6 @@
 <?php
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * class represents the reply received from the remote server
@@ -174,7 +174,7 @@ class Response
      *
      * @param resource $ch - Curl handler resource
      * @param string $header_line - line of a header
-     * @throws Exception
+     * @throws \GCurl\Exception
      * @return int
      */
     public function headersHandler($ch, $header_line)
@@ -188,7 +188,7 @@ class Response
             $regexp = "~^HTTP/1\..\s(\d{3})~";
             if (!preg_match ($regexp, $header_line, $found)) {
                 //Non-HTTP Response Heade
-                throw new Exception(110,0,$header_line);
+                throw new \GCurl\Exception(110,0,$header_line);
             } else {
                 //ok, it's HTTP
                 $this->flags |= Options::FLAG_HTTP_OK;
@@ -269,13 +269,13 @@ class Response
      * @param $ch
      * @param $data
      * @return int
-     * @throws Exception
+     * @throws \GCurl\Exception
      */
     public function bodyHandlerIntermediate($ch,$data)
     {
         try {
             $this->Handlers->bodyHandler($data);
-        } catch (Exception $E) {
+        } catch (\GCurl\Exception $E) {
             if ($E->getCode() == Response::INTERRUPT_BODY_HANDLER ) {
                 return -1;
             }
@@ -406,7 +406,7 @@ class Response
             //call headers handler
             try {
                 $this->Handlers->headersHandler($this->headers);
-            } catch (Exception $E) {
+            } catch (\GCurl\Exception $E) {
                 //exception means that the connection should be closed
                 return false;
             }

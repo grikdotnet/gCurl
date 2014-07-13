@@ -2,14 +2,11 @@
 /**
  * @author Grigori Kochanov http://www.grik.net/
  * @package GCurl
- * Date: 23.03.14
- * Time: 20:47
  */
 
-namespace GCurl;
+namespace grikdotnet\curl;
 
-
-class PostUrlencodedRequest extends GetRequest{
+class PostMultipartRequest extends GetRequest{
 	/**
 	 * data to send with POST request
 	 *
@@ -22,7 +19,7 @@ class PostUrlencodedRequest extends GetRequest{
 	 *
 	 * @var int
 	 */
-	public $post_format = Options::POST_URLENCODED;
+	const FORMAT = Options::POST_MULTIPART;
 
 	const METHOD = 'POST';
 
@@ -41,25 +38,10 @@ class PostUrlencodedRequest extends GetRequest{
 	 *
 	 * @param string $data
 	 */
-	public function setRawPostData($data)
+	public function setPostData($data)
 	{
 		$this->post_data = $data;
 		$this->post_format = Options::POST_MULTIPART;
-	}
-
-	/**
-	 * Add a variable to the  POST request
-	 *
-	 * @param string $var
-	 * @param string $var_value
-	 * @throws \GCurl\Exception
-	 */
-	public function addPostVar($var, $var_value)
-	{
-		if (!$var || !is_scalar($var_value)){
-			throw new \GCurl\Exception(51);
-		}
-		$this->post_data[$var] = $var_value;
 	}
 
 	/**
@@ -69,13 +51,6 @@ class PostUrlencodedRequest extends GetRequest{
 	 */
 	public function getPostFields()
 	{
-		if (!$this->post_data){
-			return '';
-		}
-		$data = '';
-		foreach ($this->post_data as $var=>$var_value){
-			$data .= rawurlencode($var). '=' .rawurlencode($var_value).'&';
-		}
-		return substr($data,0,-1);
+        return $this->post_data;
 	}
 }

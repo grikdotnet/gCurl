@@ -1,5 +1,5 @@
 <?php
-namespace GCurl;
+namespace grikdotnet\curl;
 
 /**
  * Main cURL Multi class
@@ -112,7 +112,8 @@ class Multi
         }
 
         for ($i=0,$j=count($this->threads);$i<$j;++$i) {
-            $Thread = $this->threads[$i]; /* @var $Thread Thread */
+            $Thread = $this->threads[$i];
+            /* @var $Thread Thread */
             if ($Thread->handlerDefined('onStart')){
                 $Thread->onStart();
             }
@@ -169,7 +170,7 @@ class Multi
                 // wait for network
                 $socket_select = curl_multi_select($this->mh,$this->TIMEOUT);
                 if ($socket_select == -1){
-                    throw new Exception(330);
+                    throw new \GCurl\Exception(330);
                 }
                 //continue the operations
             } elseif (!$thread_renew) {
@@ -189,7 +190,7 @@ class Multi
             }else{
                 $code = 300;
             }
-            throw new Exception($code);
+            throw new \GCurl\Exception($code);
         }
 
         curl_multi_close($this->mh);
@@ -200,12 +201,12 @@ class Multi
      *
      * @param $thread_id
      * @return Thread
-     * @throws Exception
+     * @throws \GCurl\Exception
      */
 	public function getThread($thread_id)
     {
         if (!isset($this->threads[$thread_id])) {
-            throw new Exception(320);
+            throw new \GCurl\Exception(320);
         }
         return $this->threads[$thread_id];
     }
