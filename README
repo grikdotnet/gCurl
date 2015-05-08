@@ -5,3 +5,4 @@ It can send HTTP GET, POST, HEAD or OPTIONS requests directly or via HTTP proxy 
 The request response may be retrieved all at once or passed to a custom response handler class. It can process the returned headers and cookies. It can also handle request redirection.
 
 Released under BSD license.
+Join the chat at https://gitter.im/grikdotnet/gCurl
